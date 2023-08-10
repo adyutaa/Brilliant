@@ -14,7 +14,6 @@ import { Button } from '@/components/ui/button'
 import axios from 'axios'
 import { useRouter, } from 'next/navigation'
 import { useState } from 'react'
-import { ChatCompletionRequestMessage } from 'openai'
 import { Empty } from '@/components/Empty'
 import { Loader} from '@/components/Loader'
 import { cn } from '@/lib/utils'
@@ -23,29 +22,25 @@ import { BotAvatar } from '@/components/bot-avatar'
 
 const CodePage = () => {
   const router = useRouter();
-  const [messages, setMessages] = useState<ChatCompletionRequestMessage[]>([])
+  const [images, setImages] = useState<string[]>([])
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      prompt: ""
+      prompt: "",
+      amount: "1",
+      resolution: "512x512"
     }
   });
 
   const isLoading = form.formState.isSubmitting
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const userMessage: ChatCompletionRequestMessage = {
-        role: "user",
-        content: values.prompt,
-      }
-      const newMessages = [...messages, userMessage];
-    {/* API CALL */}
-      const response = await axios.post("/api/code", {
-        messages: newMessages,
-      });
+      setImages([]);
+    {/* API CALL */}  
+      const response = await axios.post("/api/image", values);
 
-      setMessages((current) => [...current, userMessage, response.data]);
-
+      const urls = response.data.map((image: { url: string }) => image.url);
+      setImages(urls);
       form.reset()
     } catch (error: any) {
       // TODO: Open Pro Modal
@@ -58,11 +53,11 @@ const CodePage = () => {
   return (
     <div>
       <Heading
-        title='Code Generation'
-        description='Generate Code Easily using descriptive text'
-        icon={Code}
-        IconColor='text-green-700'
-        bgColor='bg-violet-500/10'
+        title='Image Generation'
+        description='turn yout prmpt into an image'
+        icon={ImageIcon}
+        IconColor='text-pink-700'
+        bgColor='bg-pink-500/10'
       />
       <div className='px-4 lg:px-8'>
         <Form {...form}>
@@ -76,43 +71,41 @@ const CodePage = () => {
               <FormControl className='m-0 p-0'>
                     <Input className='border-0 outline-none
                    focus-visible:ring-0 focus-visible:ring-transparent '
-                      disabled={isLoading} placeholder='Hey Marshielo, write simple toggle button using react hooks'
+                      disabled={isLoading} placeholder='A picture of a car in Indian Slums'
                    {...field} />
               </FormControl>
                 </FormItem>
               )}
 
             />
+            <FormField
+              name='amount'
+              control={form.control}
+              render={({ field }) => (
+                <FormItem className='col-span-12 lg:col-span-2'>
+                  
+              </FormItem>
+            )}
             <Button className='col-span-12 lg:col-span-2'>Generate</Button>
           </form>
         </Form>
       </div>
       <div className='space-y-4 mt-4'>
         {isLoading && (
-          <div className='p-8 rounded-lg w-full flex items-center justify-center bg-muted'>
+          <div className='p-20'>
             <Loader/>
           </div>
         )}
-        {messages.length === 0 && !isLoading && (
+        {images.length === 0 && !isLoading && (
           <div>
             <Empty
-            label="looks like you didn't say anything yet"
+            label="looks like no iamges generated yet, say something"
             />
           </div>
         )}
-        <div className='flex flex-col-reverse gap-y-4 '>
-          {messages.map((message) => (
-            <div key={message.content}
-              className={cn("p-8 w-full flex items-start gap-x-8 rounded-lg",
-              message.role === "user" ? "bg-white border border-black/10" : "bg-muted")}
-            >
-              {message.role === "user" ? <UserAvatar /> : <BotAvatar />}
-              <p className='text-sm'>
-                {message.content}
-              </p>
-            </div>
-          ))}
-          </div>
+        <div>
+          Images rendered here
+      </div>
       </div>
     </div>
   )

@@ -5,7 +5,7 @@ import {zodResolver} from '@hookform/resolvers/zod'
 import Link from "next/link"
 import React from 'react'
 import { Heading } from '@/components/heading'
-import { Code} from 'lucide-react'
+import { MessageSquare } from 'lucide-react'
 import {  useForm } from 'react-hook-form'
 import { formSchema } from './constants'
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form'
@@ -20,8 +20,9 @@ import { Loader} from '@/components/Loader'
 import { cn } from '@/lib/utils'
 import { UserAvatar } from '@/components/avatar'
 import { BotAvatar } from '@/components/bot-avatar'
+import ReactMarkdown from 'react-markdown'
 
-const CodePage = () => {
+const ConversationPage = () => {
   const router = useRouter();
   const [messages, setMessages] = useState<ChatCompletionRequestMessage[]>([])
   const form = useForm<z.infer<typeof formSchema>>({
@@ -40,7 +41,7 @@ const CodePage = () => {
       }
       const newMessages = [...messages, userMessage];
     {/* API CALL */}
-      const response = await axios.post("/api/code", {
+      const response = await axios.post("/api/conversation", {
         messages: newMessages,
       });
 
@@ -58,10 +59,10 @@ const CodePage = () => {
   return (
     <div>
       <Heading
-        title='Code Generation'
-        description='Generate Code Easily using descriptive text'
-        icon={Code}
-        IconColor='text-green-700'
+        title='Conversation AI'
+        description='This is conversation AI, you can chat with it.'
+        icon={MessageSquare}
+        IconColor='text-violet-500'
         bgColor='bg-violet-500/10'
       />
       <div className='px-4 lg:px-8'>
@@ -76,7 +77,7 @@ const CodePage = () => {
               <FormControl className='m-0 p-0'>
                     <Input className='border-0 outline-none
                    focus-visible:ring-0 focus-visible:ring-transparent '
-                      disabled={isLoading} placeholder='Hey Marshielo, write simple toggle button using react hooks'
+                      disabled={isLoading} placeholder='Hey Marshielo, how can i move on from her? :('
                    {...field} />
               </FormControl>
                 </FormItem>
@@ -107,9 +108,21 @@ const CodePage = () => {
               message.role === "user" ? "bg-white border border-black/10" : "bg-muted")}
             >
               {message.role === "user" ? <UserAvatar /> : <BotAvatar />}
-              <p className='text-sm'>
-                {message.content}
-              </p>
+              <ReactMarkdown components={{
+                pre: ({node, ...props}) => (
+                  <div className='overflow-auto w-full my-2
+                    bg-black/10 p-2 rounded-lg'>
+                    <pre {...props} />
+                  </div>
+                ),
+                code: ({ node, ...props }) => (
+                  <code className='bg-black/10 rounded-lg p-1' {...props}/>
+                )
+              }}
+              className='text-sm overflow-hidden leading-7'
+              >
+                {message.content || ""}
+             </ReactMarkdown>
             </div>
           ))}
           </div>
@@ -118,4 +131,4 @@ const CodePage = () => {
   )
 }
 
-export default CodePage
+export default ConversationPage
